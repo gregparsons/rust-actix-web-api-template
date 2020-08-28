@@ -228,46 +228,51 @@ impl<S, B> Service for CheckLoginMiddleware<S>
 
 		/*
 			States of the login state machine:
-				- logged_in
 				- path_that_doesn't_require_auth(like /auth)
+				- logged_in
 
 		 */
-		match is_logged_in {
 
-			// Not logged in (ie. no AUTHORIZATION header)
-			false => {
+		match req.path(){
 
-				// Are we routing to a secure area or not?
-				match req.path().to_lowercase().as_str() {
+			"/auth" => {
+				Either::Left(self.service.call(req))
+			},
 
-					// // /auth is open to the public
-					// "/auth" => {
-					// 	Either::Left(self.service.call(req))
-					// },
-					//
-					// "/static/httpauth.js" => {
-					// 	Either::Left(self.service.call(req))
-					// },
+			// "/" => {
+			// 	//redirect to auth for now
+			// 	Either::Right(ok(
+			// 		// req.into_response(HttpResponse::Found().header(actix_web::http::header::LOCATION, "/auth").finish().into_body())
+			// 		req.into_response(HttpResponse::Found()
+			// 			.header(actix_web::http::header::LOCATION, "/auth")
+			// 			.finish().into_body()
+			// 		)
+			// 	))
+			// },
 
+			_ => {
 
-					// Everything else is closed to the public.
-					// TODO: redirect / to /auth without login, that's basically what this does anyway.
-					_ => {
-						// anything else gets redirected to /auth
+				// all other paths require authentication
+
+				match is_logged_in {
+
+					false => {
+						// Send 401, www-authenticate for basic
+
 						Either::Right(ok(
-							// req.into_response(HttpResponse::Found().header(actix_web::http::header::LOCATION, "/auth").finish().into_body())
+						// req.into_response(HttpResponse::Found().header(actix_web::http::header::LOCATION, "/auth").finish().into_body())
 							req.into_response(HttpResponse::Unauthorized()
 								.header(actix_web::http::header::WWW_AUTHENTICATE, "Basic realm=\"Developer Portal\"")
 								.finish().into_body()
 							)
 						))
+					},
+
+					true => {
+						// logged in, proceed as requested
+						Either::Left(self.service.call(req))
 					}
 				}
-			},
-
-			true => {
-				// logged in, proceed as requested
-				Either::Left(self.service.call(req))
 			}
 		}
 	}

@@ -23,7 +23,7 @@ const FAKE_USER_PASSWORD:&str = "topsecret";
 /// Not currently needed as all functionality recommended in various books and sites has been moved to the middleware
 /// If username and password are included in an AUTHORIZATION header
 /// ref: https://www.jamesbaum.co.uk/blether/creating-authentication-middleware-actix-rust-react/
-/*async fn auth(req: actix_web::HttpRequest) -> actix_web::Result<actix_files::NamedFile> {
+async fn auth(req: actix_web::HttpRequest) -> actix_web::Result<actix_files::NamedFile> {
 	log::debug!("[auth] request headers: {:?}", req.headers());
 	let path_buf:std::path::PathBuf = std::path::PathBuf::from("static/auth.html");
 	Ok(actix_files::NamedFile::open(&path_buf)?)
@@ -31,7 +31,7 @@ const FAKE_USER_PASSWORD:&str = "topsecret";
 	//https://tools.ietf.org/html/rfc7617
 	// HttpResponse::Unauthorized().header(actix_web::http::header::WWW_AUTHENTICATE, "Basic realm=\"WallyWorld\"").finish()
 }
-*/
+
 
 /// [/]
 async fn index() -> actix_web::Result<actix_files::NamedFile>{
@@ -88,7 +88,7 @@ async fn main() -> std::io::Result<()> {
 			// })
 			.wrap(redirect::CheckLogin)
 			.route("/", actix_web::web::get().to(index))
-			// .route("/auth", actix_web::web::get().to(auth))
+			.route("/auth", actix_web::web::get().to(auth))
 			.route("/say/{message01}/{message02}", actix_web::web::get().to(get_say_message))
 			.route("/static/{filename:.*.html}", actix_web::web::get().to(get_static_file))
 	})
